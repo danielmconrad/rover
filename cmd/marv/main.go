@@ -9,31 +9,24 @@ import (
 )
 
 func main() {
-	messages := make(chan *server.Message)
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	go runServer(ctx, messages)
+	messages := server.Listen(ctx, 3737)
+	commands := motors.Start(ctx)
 
 	for {
 		select {
 		case message := <-messages:
-			consumeMessage(message)
+			commands <- messageToCommand(message)
 		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func runServer(ctx context.Context, messages chan<- *server.Message) {
-	server.Listen(ctx, 3737, func(message *server.Message) *server.Message {
-		messages <- message
-		return &server.Message{Event: "ack"}
-	})
-}
-
-func consumeMessage(message *server.Message) {
+func messageToCommand(message *server.Message) *motors.Command {
 	log.Println("Received message", message)
-	command := motors.JoystickCommand{}
-	log.Println("Will send command", command)
+	log.Println("Will send command")
+	return &motors.Command{}
 }

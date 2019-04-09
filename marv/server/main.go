@@ -19,13 +19,22 @@ type handlerFunc func(w http.ResponseWriter, req *http.Request)
 type messageHandler func(*Message) *Message
 
 // Listen NEEDSCOMMENT
-func Listen(ctx context.Context, port int, onMessage messageHandler) {
+func Listen(ctx context.Context, port int) <-chan *Message {
+	messages := make(chan *Message)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/messages", handleMessages(ctx, onMessage))
+	mux.HandleFunc("/messages", handleMessages(ctx, func(message *Message) *Message {
+		messages <- message
+		return &Message{Event: "ack"}
+	}))
 	mux.Handle("/", handleStatic(ctx))
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+	go func() {
+		defer close(messages)
+		http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
+	}()
+
+	return messages
 }
 
 func handleStatic(ctx context.Context) http.Handler {
