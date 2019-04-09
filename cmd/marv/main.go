@@ -4,16 +4,15 @@ import (
 	"context"
 	"log"
 
-	"github.com/danielmconrad/gomarv/marv/motors"
-	"github.com/danielmconrad/gomarv/marv/server"
+	"github.com/danielmconrad/gomarv/marv"
 )
 
 func main() {
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
 
-	messages := server.Listen(ctx, 3737)
-	commands := motors.Start(ctx)
+	messages := marv.StartServer(ctx, 3737)
+	commands := marv.StartMotors(ctx)
 
 	for {
 		select {
@@ -25,8 +24,7 @@ func main() {
 	}
 }
 
-func messageToCommand(message *server.Message) *motors.Command {
+func messageToCommand(message *marv.Message) *marv.Command {
 	log.Println("Received message", message)
-	log.Println("Will send command")
-	return &motors.Command{}
+	return &marv.Command{}
 }

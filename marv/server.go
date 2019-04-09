@@ -1,4 +1,4 @@
-package server
+package marv
 
 import (
 	"context"
@@ -18,8 +18,8 @@ type Message struct {
 type handlerFunc func(w http.ResponseWriter, req *http.Request)
 type messageHandler func(*Message) *Message
 
-// Listen NEEDSCOMMENT
-func Listen(ctx context.Context, port int) <-chan *Message {
+// StartServer NEEDSCOMMENT
+func StartServer(ctx context.Context, port int) <-chan *Message {
 	messages := make(chan *Message)
 	mux := http.NewServeMux()
 

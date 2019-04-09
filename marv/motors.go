@@ -1,4 +1,4 @@
-package motors
+package marv
 
 import "context"
 
@@ -11,8 +11,8 @@ type Command struct {
 	Right float64
 }
 
-// Start NEEDSCOMMENT
-func Start(ctx context.Context) chan<- *Command {
+// StartMotors NEEDSCOMMENT
+func StartMotors(ctx context.Context) chan<- *Command {
 	commands := make(chan *Command)
 
 	go func() {
@@ -31,6 +31,6 @@ func Start(ctx context.Context) chan<- *Command {
 }
 
 func handleCommand(command *Command) {
-	leftSpeed = command.Left
-	rightSpeed = command.Right
+	// leftSpeed = command.Left
+	// rightSpeed = command.Right
 }
