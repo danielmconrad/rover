@@ -2,9 +2,6 @@ package marv
 
 import "context"
 
-var leftSpeed = 0.0
-var rightSpeed = 0.0
-
 // Command NEEDSCOMMENT
 type Command struct {
 	Left  float64
