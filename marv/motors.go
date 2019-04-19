@@ -51,6 +51,8 @@ func StartMotors(ctx context.Context) chan *MotorState {
 					prevState = nextState
 				}
 			case <-ctx.Done():
+				fullStopMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
+				fullStopMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
 				return
 			}
 		}
@@ -92,6 +94,12 @@ func setMotor(speedPin, backwardPin, forwardPin rpio.Pin, speed int32) {
 	} else {
 		forwardPin.High()
 		backwardPin.High()
-		speedPin.DutyCycle(maxSpeed, maxSpeed) // Stop
+		speedPin.DutyCycle(maxSpeed, maxSpeed)
 	}
+}
+
+func fullStopMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
+	forwardPin.Low()
+	backwardPin.Low()
+	speedPin.DutyCycle(0, maxSpeed)
 }
