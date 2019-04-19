@@ -10,17 +10,28 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Message NEEDSCOMMENT
+type Message struct {
+	Event string `json:"event"`
+	Data  string `json:"data"`
+}
+
+// ControllerState NEEDSCOMMENT
+type ControllerState struct {
+	Left  float64 `json:"left"`
+	Right float64 `json:"right"`
+}
+
+type messageHandler func(*Message) *Message
+
 type handlerFunc func(w http.ResponseWriter, req *http.Request)
 
 // StartServer NEEDSCOMMENT
-func StartServer(ctx context.Context, port int) <-chan *Message {
-	controllerChan := make(chan *Message)
+func StartServer(ctx context.Context, port int) <-chan *ControllerState {
+	controllerChan := make(chan *ControllerState)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/controller", handleController(ctx, func(message *Message) *Message {
-		controllerChan <- message
-		return &Message{Event: "ack"}
-	}))
+	mux.HandleFunc("/controller", handleController(ctx, controllerChan))
 	mux.Handle("/", handleStatic(ctx))
 
 	go func() {
@@ -32,11 +43,30 @@ func StartServer(ctx context.Context, port int) <-chan *Message {
 	return controllerChan
 }
 
+func handleController(ctx context.Context, controllerChan chan *ControllerState) handlerFunc {
+	return handleMessage(ctx, func(message *Message) *Message {
+		if len(message.Data) == 0 {
+			return &Message{Event: "nodata"}
+		}
+
+		controllerState := &ControllerState{}
+
+		err := json.Unmarshal([]byte(message.Data), controllerState)
+		if err != nil {
+			log.Println("unmarshal error:", err)
+			return &Message{Event: "error", Data: err.Error()}
+		}
+
+		controllerChan <- controllerState
+		return &Message{Event: "ack"}
+	})
+}
+
 func handleStatic(ctx context.Context) http.Handler {
 	return http.FileServer(http.Dir("marv/static/"))
 }
 
-func handleController(ctx context.Context, onMessage messageHandler) handlerFunc {
+func handleMessage(ctx context.Context, onMessage messageHandler) handlerFunc {
 	upgrader := websocket.Upgrader{}
 
 	return func(w http.ResponseWriter, req *http.Request) {
@@ -70,7 +100,6 @@ func handleController(ctx context.Context, onMessage messageHandler) handlerFunc
 			err = conn.WriteMessage(messageType, responseBytes)
 			if err != nil {
 				log.Println("write error:", err)
-				break
 			}
 		}
 	}

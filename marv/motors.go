@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"math"
+	"os"
 
 	"github.com/stianeikeland/go-rpio/v4"
 )
@@ -30,21 +31,27 @@ type MotorState struct {
 func StartMotors(ctx context.Context) chan *MotorState {
 	motorChan := make(chan *MotorState)
 
-	go func() {
-		// if err := rpio.Open(); err != nil {
-		// 	log.Println(err)
-		// 	os.Exit(1)
-		// }
-		// defer rpio.Close()
+	lastState := &MotorState{}
 
-		// initializeMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
-		// initializeMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
+	go func() {
+		if err := rpio.Open(); err != nil {
+			log.Println(err)
+			os.Exit(1)
+		}
+		defer rpio.Close()
+
+		initializeMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
+		initializeMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
 
 		for {
 			select {
 			case motorState := <-motorChan:
-				log.Println(motorState)
-				// setMotors(motorState)
+				// log.Println(motorState)
+
+				if motorState.Left != lastState.Left || lastState.Right != lastState.Right {
+					setMotors(motorState)
+					lastState = motorState
+				}
 			case <-ctx.Done():
 				return
 			}
