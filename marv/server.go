@@ -1,6 +1,7 @@
 package marv
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -50,14 +51,26 @@ func handleVideo(ctx context.Context) handlerFunc {
 	upgrader := websocket.Upgrader{}
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		conn, err := upgrader.Upgrade(w, req, nil)
+		ws, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
-			log.Println("upgrade error:", err)
+			log.Println("upgrade error", err)
+			ws.WriteMessage(websocket.TextMessage, []byte(err.Error()))
 			return
 		}
-		defer conn.Close()
+		defer ws.Close()
 
-		// cmd := exec.Command("ffmpeg", "-i", "pipe:0", "-ab", "128k", "-f", "mp3", "pipe:1")
+		// discard received messages
+		go func(c *websocket.Conn) {
+			for {
+				if _, _, err := c.NextReader(); err != nil {
+					c.Close()
+					break
+				}
+			}
+		}(ws)
+
+		ws.WriteMessage(websocket.TextMessage, []byte("Starting...\n"))
+
 		cmd := exec.Command(
 			"ffmpeg",
 			"-f", "v4l2",
@@ -72,26 +85,32 @@ func handleVideo(ctx context.Context) handlerFunc {
 			"pipe:1")
 
 		stdout, err := cmd.StdoutPipe()
-
 		if err != nil {
-			log.Panic(err)
+			log.Println("stdout error", err)
+			return
 		}
-		err = cmd.Start()
-		io.Copy(w, stdout)
-
-		done := make(chan error)
-		go func() { done <- cmd.Wait() }()
-
-		for {
-			select {
-			case err := <-done:
-				log.Println("command error", err)
-				return
-			case <-ctx.Done():
-				cmd.Process.Kill()
-				return
-			}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			log.Println("stderr error", err)
+			return
 		}
+
+		if err := cmd.Start(); err != nil {
+			log.Println("command start error", err)
+			return
+		}
+
+		s := bufio.NewScanner(io.MultiReader(stdout, stderr))
+		for s.Scan() {
+			ws.WriteMessage(websocket.TextMessage, s.Bytes())
+		}
+
+		if err := cmd.Wait(); err != nil {
+			log.Println("command wait error", err)
+			return
+		}
+
+		ws.WriteMessage(websocket.CloseMessage, []byte("Finished\n"))
 	}
 }
 
@@ -122,15 +141,15 @@ func handleMessageSocket(ctx context.Context, onMessage messageHandler) handlerF
 	upgrader := websocket.Upgrader{}
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		conn, err := upgrader.Upgrade(w, req, nil)
+		ws, err := upgrader.Upgrade(w, req, nil)
 		if err != nil {
 			log.Println("upgrade error:", err)
 			return
 		}
-		defer conn.Close()
+		defer ws.Close()
 
 		for {
-			messageType, messageBytes, err := conn.ReadMessage()
+			messageType, messageBytes, err := ws.ReadMessage()
 			if err != nil {
 				log.Println("read error:", err)
 				break
@@ -149,7 +168,7 @@ func handleMessageSocket(ctx context.Context, onMessage messageHandler) handlerF
 				log.Println("marshal error:", err)
 			}
 
-			err = conn.WriteMessage(messageType, responseBytes)
+			err = ws.WriteMessage(messageType, responseBytes)
 			if err != nil {
 				log.Println("write error:", err)
 			}
