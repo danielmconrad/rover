@@ -31,4 +31,4 @@ raspivid -w 320 -h 240 -fps 15 -l -o tcp://0.0.0.0:3717
 raspivid -w 320 -h 240 -fps 15 -o - | cvlc -vvv stream:///dev/stdin --sout '#standard{access=http,mux=ts,dst=:8090}' :demux=h264
 
 
-
+ffmpeg -f v4l2 -framerate 25 -video_size 640x480 -i /dev/video0 -f mpegts -codec:v mpeg1video -s 640x480 -b:v 1000k -bf 0 
