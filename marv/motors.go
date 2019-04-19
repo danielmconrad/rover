@@ -31,7 +31,7 @@ type MotorState struct {
 func StartMotors(ctx context.Context) chan *MotorState {
 	motorChan := make(chan *MotorState)
 
-	lastState := &MotorState{}
+	prevState := &MotorState{}
 
 	go func() {
 		if err := rpio.Open(); err != nil {
@@ -45,12 +45,10 @@ func StartMotors(ctx context.Context) chan *MotorState {
 
 		for {
 			select {
-			case motorState := <-motorChan:
-				// log.Println(motorState)
-
-				if motorState.Left != lastState.Left || lastState.Right != lastState.Right {
-					setMotors(motorState)
-					lastState = motorState
+			case nextState := <-motorChan:
+				if differentEnough(prevState, nextState) {
+					setMotors(nextState)
+					prevState = nextState
 				}
 			case <-ctx.Done():
 				return
@@ -59,6 +57,13 @@ func StartMotors(ctx context.Context) chan *MotorState {
 	}()
 
 	return motorChan
+}
+
+func differentEnough(prevState, nextState *MotorState) bool {
+	leftDiff := nextState.Left - prevState.Left
+	rightDiff := nextState.Right - prevState.Right
+
+	return math.Abs(float64(leftDiff)) > 3 || math.Abs(float64(rightDiff)) > 3
 }
 
 func initializeMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
