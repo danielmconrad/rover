@@ -2,6 +2,7 @@
 
 curl -sSL https://get.docker.com | sh
 set video split to 256mb
+sudo modprobe bcm2835-v4l2
 
 ## Worked
 
@@ -18,6 +19,8 @@ raspivid -v -w 320 -h 240 -fps 15 -n -md 7 -ih -t 0 -o - | cvlc -vvv stream:///d
 ```
 
 =================================================
+
+https://github.com/phoboslab/jsmpeg
 
 raspivid -v -a 524 -a 4 -a "rpi-0 %Y-%m-%d %X" -fps 15 -n -md 2 -ih -t 0 -l -o tcp://0.0.0.0:5001
 

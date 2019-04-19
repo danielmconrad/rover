@@ -10,38 +10,33 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Message NEEDSCOMMENT
-type Message struct {
-	Event string `json:"event"`
-}
-
 type handlerFunc func(w http.ResponseWriter, req *http.Request)
-type messageHandler func(*Message) *Message
 
 // StartServer NEEDSCOMMENT
 func StartServer(ctx context.Context, port int) <-chan *Message {
-	messages := make(chan *Message)
+	controllerChan := make(chan *Message)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/messages", handleMessages(ctx, func(message *Message) *Message {
-		messages <- message
+	mux.HandleFunc("/controller", handleController(ctx, func(message *Message) *Message {
+		controllerChan <- message
 		return &Message{Event: "ack"}
 	}))
 	mux.Handle("/", handleStatic(ctx))
 
 	go func() {
-		defer close(messages)
+		defer close(controllerChan)
+		log.Printf("Listening on port %d", port)
 		http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 	}()
 
-	return messages
+	return controllerChan
 }
 
 func handleStatic(ctx context.Context) http.Handler {
 	return http.FileServer(http.Dir("marv/static/"))
 }
 
-func handleMessages(ctx context.Context, onMessage messageHandler) handlerFunc {
+func handleController(ctx context.Context, onMessage messageHandler) handlerFunc {
 	upgrader := websocket.Upgrader{}
 
 	return func(w http.ResponseWriter, req *http.Request) {

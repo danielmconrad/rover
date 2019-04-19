@@ -1,24 +1,22 @@
 $(document).foundation();
 
-const socket = new WebSocket(`ws://${location.host}/messages`);
+const controllerSocket = new WebSocket(`ws://${location.host}/controller`);
 
-socket.addEventListener('open', function (event) {
-  socket.send(JSON.stringify({ 
+var firstMessageDate;
+
+controllerSocket.addEventListener('open', function (event) {
+  controllerSocket.send(JSON.stringify({ 
     event: 'first' 
   }));
-  socket.send(JSON.stringify({ 
-    event: 'second' 
-  }));
-  socket.send(JSON.stringify({ 
-    event: 'third' 
-  }));
+  firstMessageDate = new Date();
 });
 
-socket.addEventListener('close', function (event) {
+controllerSocket.addEventListener('close', function (event) {
   console.log('Socket closed');
 });
 
-socket.addEventListener('message', function (event) {
+controllerSocket.addEventListener('message', function (event) {
+  const now = new Date();
   const message = JSON.parse(event.data);
-  console.log('Message from server ', message);
+  console.log('Message from server ', message, now - firstMessageDate);
 });
