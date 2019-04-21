@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 	"math"
-	"os"
+	"time"
 
 	"github.com/stianeikeland/go-rpio/v4"
 )
@@ -18,7 +18,9 @@ var (
 	rightForwardPin  = rpio.Pin(5)
 	rightBackwardPin = rpio.Pin(6)
 
-	maxSpeed = uint32(100)
+	maxSpeed         = uint32(100)
+	minimumChange    = float64(3)
+	sendMotorSignals = true
 )
 
 // MotorState NEEDSCOMMENT
@@ -30,29 +32,26 @@ type MotorState struct {
 // StartMotors NEEDSCOMMENT
 func StartMotors(ctx context.Context) chan *MotorState {
 	motorChan := make(chan *MotorState)
-
 	prevState := &MotorState{}
 
 	go func() {
 		if err := rpio.Open(); err != nil {
-			log.Println(err)
-			os.Exit(1)
+			log.Println("Unable to intialize pins. Incoming signals will be ignored.")
+			sendMotorSignals = false
 		}
 		defer rpio.Close()
 
-		initializeMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
-		initializeMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
+		initializeMotors()
 
 		for {
 			select {
 			case nextState := <-motorChan:
 				if differentEnough(prevState, nextState) {
-					setMotors(nextState)
+					setVelocities(nextState)
 					prevState = nextState
 				}
 			case <-ctx.Done():
-				fullStopMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
-				fullStopMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
+				fullStopMotors()
 				return
 			}
 		}
@@ -62,25 +61,40 @@ func StartMotors(ctx context.Context) chan *MotorState {
 }
 
 func differentEnough(prevState, nextState *MotorState) bool {
-	leftDiff := nextState.Left - prevState.Left
-	rightDiff := nextState.Right - prevState.Right
+	leftDiff := math.Abs(float64(nextState.Left - prevState.Left))
+	rightDiff := math.Abs(float64(nextState.Right - prevState.Right))
 
-	return math.Abs(float64(leftDiff)) > 3 || math.Abs(float64(rightDiff)) > 3
+	return leftDiff > minimumChange || rightDiff > minimumChange
+}
+
+func initializeMotors() {
+	initializeMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
+	initializeMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
 }
 
 func initializeMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
+	if !sendMotorSignals {
+		return
+	}
+
 	speedPin.Pwm()
 	speedPin.Freq(1000 * int(maxSpeed))
 	backwardPin.Output()
 	forwardPin.Output()
 }
 
-func setMotors(motorState *MotorState) {
-	setMotor(leftSpeedPin, leftBackwardPin, leftForwardPin, motorState.Left)
-	setMotor(rightSpeedPin, rightBackwardPin, rightForwardPin, motorState.Right)
+func setVelocities(motorState *MotorState) {
+	defer logDuration("setVelocities", time.Now())
+	setVelocity(leftSpeedPin, leftBackwardPin, leftForwardPin, motorState.Left)
+	setVelocity(rightSpeedPin, rightBackwardPin, rightForwardPin, motorState.Right)
 }
 
-func setMotor(speedPin, backwardPin, forwardPin rpio.Pin, speed int32) {
+func setVelocity(speedPin, backwardPin, forwardPin rpio.Pin, speed int32) {
+
+	if !sendMotorSignals {
+		return
+	}
+
 	absSpeed := uint32(math.Abs(float64(speed)))
 
 	if speed > 20 {
@@ -98,8 +112,21 @@ func setMotor(speedPin, backwardPin, forwardPin rpio.Pin, speed int32) {
 	}
 }
 
+func fullStopMotors() {
+	fullStopMotor(leftSpeedPin, leftBackwardPin, leftForwardPin)
+	fullStopMotor(rightSpeedPin, rightBackwardPin, rightForwardPin)
+}
+
 func fullStopMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
+	if !sendMotorSignals {
+		return
+	}
+
 	forwardPin.Low()
 	backwardPin.Low()
 	speedPin.DutyCycle(0, maxSpeed)
+}
+
+func logDuration(name string, stamp time.Time) {
+	log.Printf("[DURATION] %s %v", name, time.Since(stamp))
 }
