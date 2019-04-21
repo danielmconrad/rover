@@ -28,5 +28,5 @@ func StartServer(ctx context.Context, port int) <-chan *ControllerState {
 }
 
 func handleStatic(ctx context.Context) http.Handler {
-	return http.FileServer(http.Dir("marv/static/"))
+	return http.FileServer(http.Dir("static/"))
 }

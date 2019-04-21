@@ -13,29 +13,12 @@ import (
 
 var (
 	ffmpegArgs = []string{
-		"-f", "v4l2",
-		"-framerate", "25",
-		"-video_size", "320x240",
-		"-i", "/dev/video0",
-		"-f", "mpegts",
-		"-codec:v", "mpeg1video",
-		"-s", "320x240",
-		"-b:v", "1000k",
-		"-bf", "0",
-		"pipe:1",
+		"-f", "v4l2", "-framerate", "25", "-video_size", "320x240", "-i", "/dev/video0",
+		"-f", "mpegts", "-codec:v", "mpeg1video", "-s", "320x240", "-b:v", "1000k", "-bf", "0", "pipe:1",
 	}
-	// ffmpegArgs = []string{
-	// 	"-f", "avfoundation",
-	// 	"-framerate", "30",
-	// 	"-video_size", "320x240",
-	// 	"-i", "0",
-	// 	"-f", "mpegts",
-	// 	"-codec:v", "mpeg1video",
-	// 	"-s", "320x240",
-	// 	"-b:v", "1000k",
-	// 	"-bf", "0",
-	// 	"pipe:1",
-	// }
+	raspividArgs = []string{
+		"-v", "-w", "320", "-h", "240", "-fps", "12", "-n", "-md", "7", "-ih", "-t", "0", "-o", "-",
+	}
 )
 
 func handleVideo(ctx context.Context) handlerFunc {
@@ -44,9 +27,9 @@ func handleVideo(ctx context.Context) handlerFunc {
 	clients := map[*websocket.Conn]bool{}
 
 	go func() {
-		for videoData := range startVideo() {
+		for videoFragment := range startVideo() {
 			for client := range clients {
-				client.WriteMessage(websocket.BinaryMessage, videoData)
+				client.WriteMessage(websocket.BinaryMessage, videoFragment)
 			}
 		}
 	}()
@@ -76,7 +59,8 @@ func startVideo() chan []byte {
 	dataChan := make(chan []byte)
 
 	go func() {
-		cmd := exec.Command("ffmpeg", ffmpegArgs...)
+		// cmd := exec.Command("ffmpeg", ffmpegArgs...)
+		cmd := exec.Command("raspivid", raspividArgs...)
 
 		stdout, err := cmd.StdoutPipe()
 		if err != nil {
@@ -93,9 +77,18 @@ func startVideo() chan []byte {
 		}
 
 		s := bufio.NewScanner(io.MultiReader(stdout, stderr))
+
+		oldBuff := []byte{}
+
 		for s.Scan() {
 			b := s.Bytes()
-			dataChan <- b
+
+			if b[4] == 'm' && b[5] == 'o' && b[6] == 'o' && len(b) > 7 {
+				dataChan <- oldBuff
+				oldBuff = b
+			} else {
+				oldBuff = append(oldBuff, b...)
+			}
 		}
 
 		if err := cmd.Wait(); err != nil {

@@ -23,17 +23,27 @@
 
     <!-- JSMPEG -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/jsmpeg-player@2/build/JSMpeg.min.js"></script> -->
-    <script src="/JSMpeg.min.js"></script>
+    <!-- <script src="/JSMpeg.min.js"></script> -->
+
+
+    <script type="text/javascript" src="/broadway/Decoder.js"></script>
+    <script type="text/javascript" src="/broadway/YUVCanvas.js"></script>
+    <script type="text/javascript" src="/broadway/Player.js"></script>
+    <script type="text/javascript" src="/broadway/index.js"></script>
+    
   </head>
   <body>
     <div class="grid-container">
       <h1>Marv Controller</h1>
       <canvas id="video-container"></canvas>
       <div id="controller-container"></div>
+      <video controls autoplay>
+        <source src="http://marv.local:3717">
+      </video>
     </div>
 
-    <script type="text/javascript" src="/controller.js"></script>
-    <script type="text/javascript" src="/video.js"></script>
+    <!-- <script type="text/javascript" src="/controller.js"></script> -->
+    <!-- <script type="text/javascript" src="/video.js"></script> -->
 
   </body>
 </html>
