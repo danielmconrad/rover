@@ -83,7 +83,7 @@ func startVideo() chan []byte {
 		for s.Scan() {
 			b := s.Bytes()
 
-			if b[4] == 'm' && b[5] == 'o' && b[6] == 'o' && len(b) > 7 {
+			if len(b) > 7 && b[4] == 'm' && b[5] == 'o' && b[6] == 'o' {
 				dataChan <- oldBuff
 				oldBuff = b
 			} else {
