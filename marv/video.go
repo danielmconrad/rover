@@ -2,6 +2,7 @@ package marv
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"io"
 	"log"
@@ -11,14 +12,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var ()
+
 var (
 	ffmpegArgs = []string{
 		"-f", "v4l2", "-framerate", "25", "-video_size", "320x240", "-i", "/dev/video0",
 		"-f", "mpegts", "-codec:v", "mpeg1video", "-s", "320x240", "-b:v", "1000k", "-bf", "0", "pipe:1",
 	}
 	raspividArgs = []string{
-		"-v", "-w", "320", "-h", "240", "-fps", "12", "-n", "-md", "7", "-ih", "-t", "0", "-o", "-",
+		// "-v", "-w", "320", "-h", "240", "-fps", "12", "-n", "-md", "7", "-ih", "-t", "0", "-pf", "baseline", "-o", "-",
+		"-t", "0", "-o", "-", "-w", "320", "-h", "240", "-fps", "12", "-pf", "baseline",
 	}
+	nalSeparator = []byte{0x00, 0x00, 0x00, 0x01}
 )
 
 func handleVideo(ctx context.Context) handlerFunc {
@@ -76,18 +81,16 @@ func startVideo() chan []byte {
 			log.Println("command start error", err)
 		}
 
-		s := bufio.NewScanner(io.MultiReader(stdout, stderr))
+		scanner := bufio.NewScanner(io.MultiReader(stdout, stderr))
 
-		oldBuff := []byte{}
+		prevBytes := []byte{}
 
-		for s.Scan() {
-			b := s.Bytes()
+		for scanner.Scan() {
+			allBytes := append(prevBytes, scanner.Bytes()...)
 
-			if len(b) > 7 && b[4] == 'm' && b[5] == 'o' && b[6] == 'o' {
-				dataChan <- oldBuff
-				oldBuff = b
-			} else {
-				oldBuff = append(oldBuff, b...)
+			if idx := bytes.Index(allBytes[1:], nalSeparator); idx >= 0 {
+				dataChan <- allBytes[:idx+1]
+				prevBytes = allBytes[idx+1:]
 			}
 		}
 
