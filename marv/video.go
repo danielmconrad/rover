@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -20,8 +21,7 @@ var (
 		"-f", "mpegts", "-codec:v", "mpeg1video", "-s", "320x240", "-b:v", "1000k", "-bf", "0", "pipe:1",
 	}
 	raspividArgs = []string{
-		// "-v", "-w", "320", "-h", "240", "-fps", "12", "-n", "-md", "7", "-ih", "-t", "0", "-pf", "baseline", "-o", "-",
-		"-t", "0", "-o", "-", "-w", "320", "-h", "240", "-fps", "12", "-pf", "baseline",
+		"-t", "0", "-o", "-", "-w", "960", "-h", "540", "-fps", "12", "-pf", "baseline",
 	}
 	nalSeparator = []byte{0x00, 0x00, 0x00, 0x01}
 )
@@ -47,16 +47,32 @@ func handleVideo(ctx context.Context) handlerFunc {
 			return
 		}
 
-		go func(c *websocket.Conn) {
-			for {
-				if _, _, err := c.NextReader(); err != nil {
-					c.Close()
-					break
-				}
-			}
-		}(ws)
+		ws.WriteJSON(map[string]interface{}{
+			"action": "init",
+			"width":  960,
+			"height": 540,
+		})
 
-		clients[ws] = true
+		for {
+			_, message, err := ws.ReadMessage()
+			if err != nil {
+				ws.Close()
+				return
+			}
+
+			if strings.HasPrefix(string(message), "REQUESTSTREAM") {
+				clients[ws] = true
+
+				ws.SetCloseHandler(func(code int, text string) error {
+					delete(clients, ws)
+					return nil
+				})
+
+				// for videoFragment := range startVideo() {
+				// 	ws.WriteMessage(websocket.BinaryMessage, videoFragment)
+				// }
+			}
+		}
 	}
 }
 
