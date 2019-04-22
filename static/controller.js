@@ -32,10 +32,7 @@ controllerSocket.addEventListener('message', function (e) {
 });
 
 function sendControllerState() {
-  if (controllerSocket.readyState !== SOCKET.OPEN) {
-    console.log('what happened?')
-    return
-  }
+  if (controllerSocket.readyState !== SOCKET.OPEN) return;
 
   Object.values(navigator.getGamepads()).forEach(function(gamepad) {
     if (!gamepad) return;

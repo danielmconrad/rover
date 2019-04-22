@@ -41,6 +41,7 @@ func handleController(ctx context.Context, controllerChan chan *ControllerState)
 		return &Message{Event: "ack"}
 	})
 }
+
 func handleMessageSocket(ctx context.Context, onMessage messageHandler) handlerFunc {
 	upgrader := websocket.Upgrader{}
 

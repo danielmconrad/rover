@@ -19,7 +19,7 @@ var (
 		"-f", "mpegts", "-codec:v", "mpeg1video", "-s", "320x240", "-b:v", "1000k", "-bf", "0", "pipe:1",
 	}
 	raspividArgs = []string{
-		"-t", "0", "-o", "-", "-w", "960", "-h", "540", "-fps", "12", "-pf", "baseline",
+		"-t", "0", "-o", "-", "-w", "320", "-h", "240", "-fps", "12", "-pf", "baseline",
 	}
 	nalSeparator = []byte{0x00, 0x00, 0x00, 0x01}
 )
@@ -47,8 +47,8 @@ func handleVideo(ctx context.Context) handlerFunc {
 
 		ws.WriteJSON(map[string]interface{}{
 			"action": "init",
-			"width":  960,
-			"height": 540,
+			"width":  320,
+			"height": 240,
 		})
 
 		for {
