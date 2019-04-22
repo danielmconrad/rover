@@ -13,8 +13,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var ()
-
 var (
 	ffmpegArgs = []string{
 		"-f", "v4l2", "-framerate", "25", "-video_size", "320x240", "-i", "/dev/video0",
@@ -67,10 +65,6 @@ func handleVideo(ctx context.Context) handlerFunc {
 					delete(clients, ws)
 					return nil
 				})
-
-				// for videoFragment := range startVideo() {
-				// 	ws.WriteMessage(websocket.BinaryMessage, videoFragment)
-				// }
 			}
 		}
 	}
