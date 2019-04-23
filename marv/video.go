@@ -8,22 +8,28 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/websocket"
 )
 
 var (
-	raspividArgs = []string{
-		"-t", "0", "-o", "-", "-w", "320", "-h", "240", "-fps", "12", "-pf", "baseline",
-	}
+	width        = 640
+	height       = 480
 	nalSeparator = []byte{0x00, 0x00, 0x00, 0x01}
-	width        = 320
-	height       = 240
+	raspividArgs = []string{
+		"-w", strconv.Itoa(width),
+		"-h", strconv.Itoa(height),
+		"-rot", "180", "-g", "48", "-fps", "24", "-t", "0", "-pf", "baseline", "-o", "-",
+	}
 )
 
-func handleVideo(ctx context.Context) handlerFunc {
-	upgrader := websocket.Upgrader{}
+func handleVideoRequest(ctx context.Context) handlerFunc {
+	upgrader := websocket.Upgrader{
+		WriteBufferSize: 16384,
+		ReadBufferSize:  16384,
+	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
 		ws, err := upgrader.Upgrade(w, req, nil)
@@ -42,7 +48,7 @@ func handleVideo(ctx context.Context) handlerFunc {
 			return nil
 		})
 
-		go handleWebsocket(wsCtx, ws)
+		go handleVideoWebsocket(wsCtx, ws)
 
 		for {
 			select {
@@ -53,14 +59,14 @@ func handleVideo(ctx context.Context) handlerFunc {
 	}
 }
 
-func handleWebsocket(ctx context.Context, ws *websocket.Conn) {
+func handleVideoWebsocket(ctx context.Context, ws *websocket.Conn) {
 	pauseChan := make(chan bool)
 	messageChan := make(chan []byte)
 
-	handleStartStream := func() {
+	handleStartStream := func(frameChan chan []byte) {
 		for {
 			select {
-			case frame := <-startVideo(ctx):
+			case frame := <-frameChan:
 				ws.WriteMessage(websocket.BinaryMessage, frame)
 			case <-pauseChan:
 				return
@@ -82,7 +88,7 @@ func handleWebsocket(ctx context.Context, ws *websocket.Conn) {
 
 	handleMessage := func(message []byte) {
 		if strings.HasPrefix(string(message), "REQUESTSTREAM") {
-			go handleStartStream()
+			go handleStartStream(startVideo(ctx))
 		}
 
 		if strings.HasPrefix(string(message), "STOPSTREAM") {
@@ -124,25 +130,27 @@ func startVideo(ctx context.Context) chan []byte {
 			log.Println("stderr error", err)
 		}
 
+		scanner := bufio.NewScanner(stdout)
+		scanner.Buffer([]byte{}, 1024*1024)
+		scanner.Split(splitAtNALSeparator)
+
+		go func() {
+			for scanner.Scan() {
+				select {
+				case frameChan <- scanner.Bytes():
+				case <-ctx.Done():
+					return
+				}
+			}
+		}()
+
 		if err := cmd.Start(); err != nil {
 			log.Println("command start error", err)
 		}
 
-		scanner := bufio.NewScanner(stdout)
-		scanner.Split(splitAtNALSeparator)
-
-		for scanner.Scan() {
-			select {
-			case frameChan <- scanner.Bytes():
-			case <-ctx.Done():
-				return
-			}
-		}
-
 		if err := cmd.Wait(); err != nil {
-			log.Println("command wait error", err)
 			stderrLog, _ := ioutil.ReadAll(stderr)
-			log.Println("stderr log", stderrLog)
+			log.Println("command wait error", err, stderrLog)
 			return
 		}
 	}()
@@ -155,8 +163,11 @@ func splitAtNALSeparator(data []byte, atEOF bool) (advance int, token []byte, er
 		return 0, nil, nil
 	}
 
-	if idx := bytes.Index(data[4:], nalSeparator); idx >= 0 {
-		return idx + 4, data[0 : idx+4], nil
+	if idx := bytes.Index(data, nalSeparator); idx >= 0 {
+		if idx == 0 {
+			return idx + 4, nil, nil
+		}
+		return idx + 1, append(nalSeparator, data[:idx]...), nil
 	}
 
 	if atEOF {
