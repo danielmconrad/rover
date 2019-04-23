@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os/exec"
@@ -118,6 +119,11 @@ func startVideo(ctx context.Context) chan []byte {
 			log.Println("stdout error", err)
 		}
 
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			log.Println("stderr error", err)
+		}
+
 		if err := cmd.Start(); err != nil {
 			log.Println("command start error", err)
 		}
@@ -135,6 +141,8 @@ func startVideo(ctx context.Context) chan []byte {
 
 		if err := cmd.Wait(); err != nil {
 			log.Println("command wait error", err)
+			stderrLog, _ := ioutil.ReadAll(stderr)
+			log.Println("stderr log", stderrLog)
 			return
 		}
 	}()
