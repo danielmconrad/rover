@@ -16,19 +16,27 @@ import (
 
 var (
 	width        = 640
-	height       = 480
+	height       = 360
 	nalSeparator = []byte{0x00, 0x00, 0x00, 0x01}
 	raspividArgs = []string{
 		"-w", strconv.Itoa(width),
 		"-h", strconv.Itoa(height),
-		"-rot", "180", "-g", "48", "-fps", "24", "-t", "0", "-pf", "baseline", "-o", "-",
+
+		"-rot", "180",
+		"-fps", "24",
+		"-t", "0",
+		"-pf", "baseline",
+		"-o", "-",
+		// "-n", // No Preview
+		// "-ev", "10", // Stabilization
+		// "-g", "48", // Keyframes
+		// "-ex", "antishake", // Antishake
 	}
 )
 
 func handleVideoRequest(ctx context.Context) handlerFunc {
 	upgrader := websocket.Upgrader{
 		WriteBufferSize: 16384,
-		ReadBufferSize:  16384,
 	}
 
 	return func(w http.ResponseWriter, req *http.Request) {
