@@ -14,9 +14,9 @@ func StartServer(ctx context.Context, port int) <-chan *ControllerState {
 	controllerChan := make(chan *ControllerState)
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/controller", handleControllerRequest(ctx, controllerChan))
-	mux.HandleFunc("/video", handleVideoRequest(ctx))
-	mux.Handle("/", handleStaticRequest(ctx))
+	mux.HandleFunc("/controller", handleControllerRequests(ctx, controllerChan))
+	mux.HandleFunc("/video", handleVideoRequests(ctx))
+	mux.Handle("/", handleStaticRequests(ctx))
 
 	go func() {
 		defer close(controllerChan)
@@ -27,6 +27,6 @@ func StartServer(ctx context.Context, port int) <-chan *ControllerState {
 	return controllerChan
 }
 
-func handleStaticRequest(ctx context.Context) http.Handler {
+func handleStaticRequests(ctx context.Context) http.Handler {
 	return http.FileServer(http.Dir("static/"))
 }

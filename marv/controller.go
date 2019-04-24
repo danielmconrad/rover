@@ -23,7 +23,7 @@ type Message struct {
 
 type messageHandler func(*Message) *Message
 
-func handleControllerRequest(ctx context.Context, controllerChan chan *ControllerState) handlerFunc {
+func handleControllerRequests(ctx context.Context, controllerChan chan *ControllerState) handlerFunc {
 	return handleMessageSocket(ctx, func(message *Message) *Message {
 		if len(message.Data) == 0 {
 			return &Message{Event: "nodata"}

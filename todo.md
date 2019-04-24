@@ -10,7 +10,18 @@
 1. Install git, vim
 1. Install Docker (curl -sSL https://get.docker.com | sh)
 
+## Marv Hardware Config
+
+1. Fritzing
+
 ## Marv Install
 
 1. Clone 
 1. Make install
+
+## To Do
+
+Optional
+- Katamari
+- Controller style select
+    - Left analog only
