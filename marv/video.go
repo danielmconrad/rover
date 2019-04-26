@@ -20,7 +20,7 @@ var (
 	width        = 640
 	raspividArgs = []string{
 		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height),
-		"-rot", "180", "-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
+		"-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
 	}
 	initialFrameCount = 8
 	nalSeparator      = []byte{0x00, 0x00, 0x00, 0x01}
