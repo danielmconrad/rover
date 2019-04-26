@@ -3,19 +3,18 @@ package marv
 import (
 	"context"
 	"math"
-	"time"
 
 	"github.com/stianeikeland/go-rpio/v4"
 )
 
 var (
 	leftSpeedPin    = rpio.Pin(12)
-	leftForwardPin  = rpio.Pin(16)
-	leftBackwardPin = rpio.Pin(20)
+	leftForwardPin  = rpio.Pin(20)
+	leftBackwardPin = rpio.Pin(16)
 
 	rightSpeedPin    = rpio.Pin(13)
-	rightForwardPin  = rpio.Pin(5)
-	rightBackwardPin = rpio.Pin(6)
+	rightForwardPin  = rpio.Pin(6)
+	rightBackwardPin = rpio.Pin(5)
 
 	maxSpeed         = uint32(100)
 	minimumChange    = float64(3)
@@ -83,7 +82,6 @@ func initializeMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
 }
 
 func setVelocities(motorState *MotorState) {
-	defer logDuration("setVelocities", time.Now())
 	setVelocity(leftSpeedPin, leftBackwardPin, leftForwardPin, motorState.Left)
 	setVelocity(rightSpeedPin, rightBackwardPin, rightForwardPin, motorState.Right)
 }
@@ -124,8 +122,4 @@ func fullStopMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
 	forwardPin.Low()
 	backwardPin.Low()
 	speedPin.DutyCycle(0, maxSpeed)
-}
-
-func logDuration(name string, stamp time.Time) {
-	logInfo("Duration: %s %v", name, time.Since(stamp))
 }
