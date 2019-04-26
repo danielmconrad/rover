@@ -16,13 +16,13 @@ import (
 )
 
 var (
-	height       = 360
 	width        = 640
+	height       = 400
 	raspividArgs = []string{
 		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height),
 		"-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
 	}
-	initialFrameCount = 8
+	initialFrameCount = 4
 	nalSeparator      = []byte{0x00, 0x00, 0x00, 0x01}
 )
 

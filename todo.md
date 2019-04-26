@@ -18,6 +18,7 @@
 
 1. Clone 
 1. Make install
+1. Use docker to autostart the program (restart always)
 
 ## To Do
 
