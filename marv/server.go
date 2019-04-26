@@ -3,7 +3,6 @@ package marv
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -20,7 +19,7 @@ func StartServer(ctx context.Context, port int) <-chan *ControllerState {
 
 	go func() {
 		defer close(controllerChan)
-		log.Printf("Listening on port %d", port)
+		logSuccess("Listening on port", port)
 		http.ListenAndServe(fmt.Sprintf(":%d", port), mux)
 	}()
 

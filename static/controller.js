@@ -28,7 +28,7 @@ controllerSocket.addEventListener('close', function (e) {
 });
 
 controllerSocket.addEventListener('message', function (e) {
-  // console.log('Message from server ', JSON.parse(e.data));
+  console.log('Message from server ', JSON.parse(e.data));
 });
 
 function sendControllerState() {
@@ -40,11 +40,8 @@ function sendControllerState() {
     controllerContainer.innerHTML = `${gamepad.axes[1]} ${gamepad.axes[3]}`;
 
     controllerSocket.send(JSON.stringify({ 
-      event: 'controller_state',
-      data: JSON.stringify({
-        left: gamepad.axes[1],
-        right: gamepad.axes[3],
-      })
+      left: gamepad.axes[1],
+      right: gamepad.axes[3],
     }));
   })
   requestAnimationFrame(sendControllerState)

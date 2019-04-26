@@ -5,9 +5,9 @@ import (
 	"bytes"
 	"context"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -19,67 +19,21 @@ var (
 	height       = 360
 	width        = 640
 	raspividArgs = []string{
-		"-w", strconv.Itoa(width),
-		"-h", strconv.Itoa(height),
-		// "-n", // No Preview
-		// "-ev", "10", // Stabilization
-		// "-ex", "antishake" // Antishake
-		"-rot", "180",
-		"-fps", "48",
-		"-t", "0",
-		"-pf", "baseline",
-		"-o", "-",
+		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height),
+		"-rot", "180", "-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
 	}
-
 	initialFrameCount = 8
 	nalSeparator      = []byte{0x00, 0x00, 0x00, 0x01}
 )
 
-type clientMap struct {
-	clients       map[*websocket.Conn]bool
-	mutex         sync.RWMutex
-	initialFrames [][]byte
-}
-
-func newClientMap(initialFrames [][]byte) *clientMap {
-	return &clientMap{
-		clients:       map[*websocket.Conn]bool{},
-		initialFrames: initialFrames,
-	}
-}
-
-// Clients NEEDSCOMMENT
-func (c *clientMap) Clients() map[*websocket.Conn]bool {
-	c.mutex.RLock()
-	defer c.mutex.RUnlock()
-	return c.clients
-}
-
-// Pause NEEDSCOMMENT
-func (c *clientMap) Pause(client *websocket.Conn) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.clients[client] = false
-}
-
-// Start NEEDSCOMMENT
-func (c *clientMap) Start(client *websocket.Conn) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	_, alreadyHasClient := c.clients[client]
-	c.clients[client] = true
-
-	if !alreadyHasClient {
-		for _, frame := range c.initialFrames {
-			client.WriteMessage(websocket.BinaryMessage, frame)
-		}
-	}
-}
-
 func handleVideoRequests(ctx context.Context) handlerFunc {
+	if runtime.GOOS != "linux" || runtime.GOARCH != "arm" {
+		logWarning("Video not supported")
+		return handleUnsupportedVideoWebsocket
+	}
+
 	framesChan, initialFrames := startCamera(ctx)
-	clients := newClientMap(initialFrames)
+	clients := NewClientMap(initialFrames)
 
 	upgrader := websocket.Upgrader{WriteBufferSize: 16384}
 
@@ -90,7 +44,7 @@ func handleVideoRequests(ctx context.Context) handlerFunc {
 		defer ws.Close()
 
 		if err != nil {
-			log.Println("upgrade error", err)
+			logError("upgrade error", err)
 			return
 		}
 
@@ -113,6 +67,55 @@ func handleVideoRequests(ctx context.Context) handlerFunc {
 	}
 }
 
+func handleVideoWebsocket(ctx context.Context, ws *websocket.Conn, clients *ClientMap, initialFrames [][]byte) {
+	ws.WriteJSON(map[string]interface{}{
+		"action": "init",
+		"width":  width,
+		"height": height,
+	})
+
+	for {
+		_, message, err := ws.ReadMessage()
+		if err != nil {
+			return
+		}
+
+		if strings.HasPrefix(string(message), "REQUESTSTREAM") {
+			clients.Start(ws)
+		}
+
+		if strings.HasPrefix(string(message), "STOPSTREAM") {
+			clients.Pause(ws)
+		}
+	}
+}
+
+func sendFramesToClients(frames chan []byte, clients *ClientMap) {
+	for frame := range frames {
+		for client, isPlaying := range clients.Clients() {
+			if isPlaying {
+				client.WriteMessage(websocket.BinaryMessage, frame)
+			}
+		}
+	}
+}
+
+func handleUnsupportedVideoWebsocket(w http.ResponseWriter, req *http.Request) {
+	upgrader := websocket.Upgrader{WriteBufferSize: 16384}
+	ws, err := upgrader.Upgrade(w, req, nil)
+	defer ws.Close()
+
+	if err != nil {
+		logError("upgrade error", err)
+		return
+	}
+
+	ws.WriteJSON(map[string]interface{}{
+		"action": "error",
+		"error":  "Not Supported",
+	})
+}
+
 func startCamera(ctx context.Context) (chan []byte, [][]byte) {
 	frameChan := make(chan []byte)
 	initialFrames := [][]byte{}
@@ -121,12 +124,12 @@ func startCamera(ctx context.Context) (chan []byte, [][]byte) {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		log.Panicln("stdout error", err)
+		logPanic("stdout error", err)
 	}
 
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		log.Panicln("stderr error", err)
+		logPanic("stderr error", err)
 	}
 
 	scanner := bufio.NewScanner(stdout)
@@ -157,12 +160,12 @@ func startCamera(ctx context.Context) (chan []byte, [][]byte) {
 
 	go func() {
 		if err := cmd.Start(); err != nil {
-			log.Panicln("command start error", err)
+			logPanic("command start error", err)
 		}
 
 		if err := cmd.Wait(); err != nil {
 			stderrLog, _ := ioutil.ReadAll(stderr)
-			log.Panicln("command wait error", err, stderrLog)
+			logPanic("command wait error", err, stderrLog)
 		}
 	}()
 
@@ -188,37 +191,4 @@ func splitAtNALSeparator(data []byte, atEOF bool) (advance int, token []byte, er
 	}
 
 	return 0, nil, nil
-}
-
-func sendFramesToClients(frames chan []byte, clients *clientMap) {
-	for frame := range frames {
-		for client, isPlaying := range clients.Clients() {
-			if isPlaying {
-				client.WriteMessage(websocket.BinaryMessage, frame)
-			}
-		}
-	}
-}
-
-func handleVideoWebsocket(ctx context.Context, ws *websocket.Conn, clients *clientMap, initialFrames [][]byte) {
-	ws.WriteJSON(map[string]interface{}{
-		"action": "init",
-		"width":  width,
-		"height": height,
-	})
-
-	for {
-		_, message, err := ws.ReadMessage()
-		if err != nil {
-			return
-		}
-
-		if strings.HasPrefix(string(message), "REQUESTSTREAM") {
-			clients.Start(ws)
-		}
-
-		if strings.HasPrefix(string(message), "STOPSTREAM") {
-			clients.Pause(ws)
-		}
-	}
 }

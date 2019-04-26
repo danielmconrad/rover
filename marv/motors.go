@@ -2,7 +2,6 @@ package marv
 
 import (
 	"context"
-	"log"
 	"math"
 	"time"
 
@@ -36,7 +35,7 @@ func StartMotors(ctx context.Context) chan *MotorState {
 
 	go func() {
 		if err := rpio.Open(); err != nil {
-			log.Println("Unable to intialize pins. Incoming signals will be ignored.")
+			logWarning("Disabling motor control")
 			sendMotorSignals = false
 		}
 		defer rpio.Close()
@@ -128,5 +127,5 @@ func fullStopMotor(speedPin, backwardPin, forwardPin rpio.Pin) {
 }
 
 func logDuration(name string, stamp time.Time) {
-	log.Printf("[DURATION] %s %v", name, time.Since(stamp))
+	logInfo("Duration: %s %v", name, time.Since(stamp))
 }
