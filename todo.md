@@ -19,10 +19,3 @@
 1. Clone 
 1. Make install
 1. Use docker to autostart the program (restart always)
-
-## To Do
-
-Optional
-- Katamari
-- Controller style select
-    - Left analog only
