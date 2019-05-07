@@ -13,7 +13,7 @@
     <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.5.3/dist/css/foundation-prototype.min.css" integrity="sha256-ksLmXa0k3ACbX6azB9g6l7XlmSKFBkuH0DXKNwULXtE= sha384-RGTvu65DAT+yLQsTj5tnITDrMfrS5mbajNAYILSg4hHr9vRr/3Y9q0WAdChqLKfx sha512-KMJ7XYrv5UcwEvJFaYnLSdN5O3fT7aQvjed//LQPB3AsN4VPA/wXG9j4x4vKZkjNmU/U8aZC9Ac3FYxs9lPXcw==" crossorigin="anonymous"> -->
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="stylesheet" href="styles.css">
 
     <!-- jQuery -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/jquery@3.3.1/dist/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script> -->
@@ -24,7 +24,10 @@
       $(document).foundation();
     </script> -->
      
-    <script type="text/javascript" src="/vendor/h264-live-player.js"></script>
+    <!-- <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/gh/mbebenita/Broadway@master/Player/YUVCanvas.js"></script> -->
+    <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/gh/mbebenita/Broadway@master/Player/Decoder.js"></script>
+    <!-- <script crossorigin="anonymous" src="https://cdn.jsdelivr.net/gh/mbebenita/Broadway@master/Player/Player.js"></script> -->
+    <!-- <script type="text/javascript" src="/vendor/h264-live-player.js"></script> -->
     
   </head>
   <body>
@@ -33,8 +36,8 @@
     <h1>Loading...</h1>
     <div id="controller-container"></div>
 
-    <script type="text/javascript" src="/controller.js"></script>
-    <script type="text/javascript" src="/video.js"></script>
+    <script type="text/javascript" src="controller.js"></script>
+    <script type="text/javascript" src="video.js"></script>
 
   </body>
 </html>

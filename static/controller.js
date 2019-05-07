@@ -1,3 +1,6 @@
+const controllerSocket = new WebSocket(`ws://${location.host}/controller`);
+const controllerContainer = document.getElementById('controller-container');
+
 const SOCKET = {
   CONNECTING: 0,
   OPEN: 1,
@@ -5,30 +8,17 @@ const SOCKET = {
   CLOSED: 3,
 };
 
-const haveEvents = 'ongamepadconnected' in window;
-const controllers = {};
-const controllerSocket = new WebSocket(`ws://${location.host}/controller`);
-const controllerContainer = document.getElementById('controller-container');
-
-window.addEventListener("gamepadconnected", function(e) {
-  controllers[e.gamepad.index] = e.gamepad;
-});
-
-window.addEventListener("gamepaddisconnected", function(e) {
-  delete controllers[e.gamepad.index];
-});
-
 controllerSocket.addEventListener('open', function (e) {
-  console.log('Socket connected');
+  console.log('Controller socket connected');
   sendControllerState();
 });
 
 controllerSocket.addEventListener('close', function (e) {
-  console.log('Socket closed');
+  console.log('Controller socket closed');
 });
 
 controllerSocket.addEventListener('message', function (e) {
-  console.log('Message from server ', JSON.parse(e.data));
+  console.log('Controller message from server ', JSON.parse(e.data));
 });
 
 function sendControllerState() {

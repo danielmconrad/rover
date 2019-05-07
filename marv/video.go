@@ -74,17 +74,15 @@ func handleVideoWebsocket(ctx context.Context, ws *websocket.Conn, clients *Clie
 		"height": height,
 	})
 
+	clients.Start(ws)
+
 	for {
 		_, message, err := ws.ReadMessage()
 		if err != nil {
 			return
 		}
 
-		if strings.HasPrefix(string(message), "REQUESTSTREAM") {
-			clients.Start(ws)
-		}
-
-		if strings.HasPrefix(string(message), "STOPSTREAM") {
+		if strings.HasPrefix(string(message), "pause") {
 			clients.Pause(ws)
 		}
 	}
