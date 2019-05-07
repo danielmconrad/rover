@@ -74,15 +74,18 @@ func handleVideoWebsocket(ctx context.Context, ws *websocket.Conn, clients *Clie
 		"height": height,
 	})
 
-	clients.Start(ws)
-
 	for {
+		// CONVERT TO JSON
 		_, message, err := ws.ReadMessage()
 		if err != nil {
 			return
 		}
 
-		if strings.HasPrefix(string(message), "pause") {
+		if strings.Contains(string(message), "start") {
+			clients.Start(ws)
+		}
+
+		if strings.Contains(string(message), "pause") {
 			clients.Pause(ws)
 		}
 	}

@@ -33,6 +33,7 @@ function sendControllerState() {
       left: gamepad.axes[1],
       right: gamepad.axes[3],
     }));
-  })
-  requestAnimationFrame(sendControllerState)
+  });
+
+  requestAnimationFrame(sendControllerState);
 }
