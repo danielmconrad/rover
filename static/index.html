@@ -24,18 +24,17 @@
       $(document).foundation();
     </script> -->
      
-    <script type="text/javascript" crossorigin="anonymous" src="https://cdn.jsdelivr.net/gh/danielmconrad/Broadway@jsdelivr/Player/Decoder.js"></script>
-    <script type="text/javascript" crossorigin="anonymous" src="https://cdn.jsdelivr.net/gh/danielmconrad/Broadway@jsdelivr/Player/YUVCanvas.js"></script>
+    <script type="text/javascript" crossorigin="anonymous" src="https://cdn.jsdelivr.net/gh/nicholashaydensmith/libde265.js/lib/libde265.js"></script>
     
   </head>
   <body>
-    <div id="video-container"></div>
+    <div id="video-container"><canvas id="video-canvas"></canvas></div>
     
     <h1>Loading...</h1>
     <div id="controller-container"></div>
 
     <script type="text/javascript" src="controller.js"></script>
-    <script type="text/javascript" src="video.js"></script>
+    <script type="text/javascript" src="video265.js"></script>
 
   </body>
 </html>

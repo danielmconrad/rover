@@ -1,5 +1,7 @@
-const videoSocket = new WebSocket(`ws://${location.host}/video`);
+const videoURL = `ws://${location.host}/video`;
+const videoSocket = new WebSocket(videoURL);
 const videoContainer = document.getElementById('video-container');
+const videoCanvas = document.getElementById('video-canvas');
 
 var decoder = new Decoder();
 var running = false;
@@ -7,8 +9,6 @@ var frames = [];
 
 videoSocket.addEventListener('open', function (e) {
   console.log('Video socket connected');
-  videoSocket.send(JSON.stringify({ action: "start" }));
-  render();
 });
 
 videoSocket.addEventListener('close', function (e) {
@@ -25,15 +25,16 @@ videoSocket.addEventListener('message', function (e) {
     const canvasWrapper = new YUVCanvas(message);
     decoder.onPictureDecoded = canvasWrapper.decode;
     videoContainer.appendChild(canvasWrapper.canvasElement);
+    
+    videoSocket.send(JSON.stringify({ action: "start" }));
+    render();
   }
 });
 
 function render() {
-  if (!running) return;
-  if (frames.length >= 10) {
-    console.log('dropping')
-    return frames = [];
+  if (frames.length) { 
+    decoder.decode(new Uint8Array(frames.shift()));
   }
-  return decoder.decode(new Uint8Array(frames.pop()));
+  
   requestAnimationFrame(render);
 }

@@ -8,7 +8,7 @@ import (
 
 // ClientMap NEEDSCOMMENT
 type ClientMap struct {
-	clients               map[*websocket.Conn]bool
+	clients               map[*websocket.Conn]map[string]interface{}
 	mutex                 sync.RWMutex
 	initialBinaryMessages [][]byte
 }
@@ -16,13 +16,13 @@ type ClientMap struct {
 // NewClientMap NEEDSCOMMENT
 func NewClientMap(initialBinaryMessages [][]byte) *ClientMap {
 	return &ClientMap{
-		clients:               map[*websocket.Conn]bool{},
+		clients:               map[*websocket.Conn]map[string]interface{}{},
 		initialBinaryMessages: initialBinaryMessages,
 	}
 }
 
 // Clients NEEDSCOMMENT
-func (c *ClientMap) Clients() map[*websocket.Conn]bool {
+func (c *ClientMap) Clients() map[*websocket.Conn]map[string]interface{} {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 	return c.clients
@@ -32,7 +32,7 @@ func (c *ClientMap) Clients() map[*websocket.Conn]bool {
 func (c *ClientMap) Pause(client *websocket.Conn) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	c.clients[client] = false
+	c.clients[client]["started"] = false
 }
 
 // Start NEEDSCOMMENT
@@ -41,7 +41,7 @@ func (c *ClientMap) Start(client *websocket.Conn) {
 	defer c.mutex.Unlock()
 
 	_, alreadyHasClient := c.clients[client]
-	c.clients[client] = true
+	c.clients[client]["started"] = true
 
 	if !alreadyHasClient {
 		for _, frame := range c.initialBinaryMessages {
