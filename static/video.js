@@ -5,7 +5,7 @@ const videoSocket = new WebSocket(`ws://${location.host}/video`);
 videoSocket.binaryType = 'arraybuffer';
 
 const videoContainer = document.getElementById('video-container');
-const player = new Player();
+const player = new Player({ useWorker: true });
 videoContainer.appendChild(player.canvas);
 
 videoSocket.addEventListener('open', function (e) {
@@ -19,9 +19,7 @@ videoSocket.addEventListener('close', function (e) {
 });
 
 videoSocket.addEventListener('message', function (e) {
-  if (typeof e.data !== 'string') {
-    frames.push(e);
-  }
+  if (typeof e.data !== 'string') frames.push(e);
 });
 
 function render() {
