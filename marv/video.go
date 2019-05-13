@@ -16,18 +16,46 @@ import (
 )
 
 var (
-	width        = 640
-	height       = 400
+	width  = 640
+	height = 480
+
 	raspividArgs = []string{
+		"raspivid",
 		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height),
 		"-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
 	}
+
+	ffmpegArgs = []string{
+		"ffmpeg",
+
+		// Input
+		"-f", "avfoundation",
+		"-framerate", "30",
+		"-pixel_format", "yuyv422",
+		"-video_size", "640x480",
+		"-i", "0",
+
+		// Output
+		"-vcodec", "libx264",
+		"-profile:v", "baseline",
+		"-pix_fmt", "yuv420p",
+		"-level:v", "4.2",
+		"-preset", "ultrafast",
+		"-tune", "zerolatency",
+		"-bufsize", "0",
+		"-crf", "22",
+		"-f", "rawvideo",
+		"-",
+	}
 	initialFrameCount = 4
 	nalSeparator      = []byte{0x00, 0x00, 0x00, 0x01}
+
+	isRaspberry = runtime.GOOS == "linux" && runtime.GOARCH == "arm"
+	isMac       = runtime.GOOS == "darwin"
 )
 
 func handleVideoRequests(ctx context.Context) handlerFunc {
-	if runtime.GOOS != "linux" || runtime.GOARCH != "arm" {
+	if !isRaspberry && !isMac {
 		logWarning("Video not supported")
 		return handleUnsupportedVideoWebsocket
 	}
@@ -121,7 +149,13 @@ func startCamera(ctx context.Context) (chan []byte, [][]byte) {
 	frameChan := make(chan []byte)
 	initialFrames := [][]byte{}
 
-	cmd := exec.CommandContext(ctx, "raspivid", raspividArgs...)
+	args := raspividArgs
+
+	if isMac {
+		args = ffmpegArgs
+	}
+
+	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {

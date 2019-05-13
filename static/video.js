@@ -7,7 +7,7 @@ videoSocket.binaryType = 'arraybuffer';
 const videoContainer = document.getElementById('video-container');
 const player = new Player({ 
   useWorker: true, 
-  workerFile: './vendor/Decoder.js',
+  workerFile: './broadway/Decoder.js',
   webgl: true
 });
 videoContainer.appendChild(player.canvas);
