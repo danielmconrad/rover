@@ -14,3 +14,5 @@ COPY . .
 RUN make build
 
 FROM build_base AS server_builder
+
+ENTRYPOINT ["/app/bin/marv"]
