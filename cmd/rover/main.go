@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/danielmconrad/gomarv/marv"
+	"github.com/danielmconrad/rover/rover"
 )
 
 func main() {
@@ -12,15 +12,15 @@ func main() {
 
 	// create video instance and send into the server
 
-	controllerChan := marv.StartServer(ctx, 3737)
-	motorChan := marv.StartMotors(ctx)
+	controllerChan := rover.StartServer(ctx, 3737)
+	motorChan := rover.StartMotors(ctx)
 
 	for {
 		select {
 		case controllerState := <-controllerChan:
 			// log.Println("controllerState", controllerState)
 
-			motorState := &marv.MotorState{
+			motorState := &rover.MotorState{
 				Left:  int32(controllerState.Left * 100),
 				Right: int32(controllerState.Right * 100),
 			}

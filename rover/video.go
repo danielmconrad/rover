@@ -1,4 +1,4 @@
-package marv
+package rover
 
 import (
 	"bufio"
@@ -19,13 +19,15 @@ var (
 	width  = 640
 	height = 480
 
+	ffmpegArgsLinux = []string{}
+
 	raspividArgs = []string{
 		"raspivid",
 		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height),
 		"-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
 	}
 
-	ffmpegArgs = []string{
+	ffmpegArgsMac = []string{
 		"ffmpeg",
 
 		// Input
@@ -37,6 +39,7 @@ var (
 		"-preset", "ultrafast", "-tune", "zerolatency", "-bufsize", "0", "-crf", "22",
 		"-f", "rawvideo", "-",
 	}
+
 	initialFrameCount = 4
 	nalSeparator      = []byte{0x00, 0x00, 0x00, 0x01}
 
@@ -45,12 +48,6 @@ var (
 )
 
 func handleVideoRequests(ctx context.Context) handlerFunc {
-	// if !isRaspberry && !isMac {
-	// 	logInfo(runtime.GOOS, runtime.GOARCH)
-	// 	logWarning("Video not supported")
-	// 	return handleUnsupportedVideoWebsocket
-	// }
-
 	framesChan, initialFrames := startCamera(ctx)
 	clients := NewClientMap(initialFrames)
 
@@ -94,7 +91,6 @@ func handleVideoWebsocket(ctx context.Context, ws *websocket.Conn, clients *Clie
 	})
 
 	for {
-		// CONVERT TO JSON
 		_, message, err := ws.ReadMessage()
 		if err != nil {
 			return
@@ -140,7 +136,11 @@ func startCamera(ctx context.Context) (chan []byte, [][]byte) {
 	frameChan := make(chan []byte)
 	initialFrames := [][]byte{}
 
-	args := ffmpegArgs
+	args := ffmpegArgsLinux
+
+	if isMac {
+		args = ffmpegArgsMac
+	}
 
 	if isRaspberry {
 		args = raspividArgs

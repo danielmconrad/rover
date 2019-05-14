@@ -1,3 +1,4 @@
+github.com/danielmconrad/rover v0.0.0-20190514030936-ad92823846ab h1:Jq87tc40pUdmaNjEftEt8F4Ok2dsLr2sCc/ZasqL/no=
 github.com/gorilla/websocket v1.4.0 h1:WDFjx/TMzVgy9VdMMQi2K2Emtwi2QcUQsztZ/zLaH/Q=
 github.com/gorilla/websocket v1.4.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
 github.com/hashicorp/errwrap v1.0.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=

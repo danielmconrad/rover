@@ -1,4 +1,4 @@
-module github.com/danielmconrad/gomarv
+module github.com/danielmconrad/rover
 
 go 1.12
 

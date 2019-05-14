@@ -7,15 +7,26 @@
 1. Enable GPIO
 1. Enable Camera (enable v4l2?)
 1. Enable WiFi w/ creds
-1. Install git, vim
+
+```
+sudo apt-get update && sudo apt-get upgrade
+sudo raspi-config nonint do_memory_split 256
+sudo raspi-config nonint do_hostname marv
+sudo raspi-config nonint do_camera 1
+sudo raspi-config nonint do_expand_rootfs
+sudo raspi-config nonint do_wifi_country US
+```
+
 1. Install Docker (curl -sSL https://get.docker.com | sh)
 
-## Marv Hardware Config
+## Hardware Config
 
 1. Fritzing
 
-## Marv Install
 
-1. Clone 
-1. Make install
-1. Use docker to autostart the program (restart always)
+## Running
+
+```bash
+docker pull danielmconrad/rover:latest
+docker run -dit --privileged --restart unless-stopped -p 3737:3737 danielmconrad/rover:latest 
+```
