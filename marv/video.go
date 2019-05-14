@@ -29,23 +29,13 @@ var (
 		"ffmpeg",
 
 		// Input
-		"-f", "avfoundation",
-		"-framerate", "30",
-		"-pixel_format", "yuyv422",
-		"-video_size", "640x480",
-		"-i", "0",
+		"-f", "avfoundation", "-framerate", "30", "-pixel_format", "yuyv422",
+		"-video_size", "640x480", "-i", "0",
 
 		// Output
-		"-vcodec", "libx264",
-		"-profile:v", "baseline",
-		"-pix_fmt", "yuv420p",
-		"-level:v", "4.2",
-		"-preset", "ultrafast",
-		"-tune", "zerolatency",
-		"-bufsize", "0",
-		"-crf", "22",
-		"-f", "rawvideo",
-		"-",
+		"-vcodec", "libx264", "-profile:v", "baseline", "-pix_fmt", "yuv420p", "-level:v", "4.2",
+		"-preset", "ultrafast", "-tune", "zerolatency", "-bufsize", "0", "-crf", "22",
+		"-f", "rawvideo", "-",
 	}
 	initialFrameCount = 4
 	nalSeparator      = []byte{0x00, 0x00, 0x00, 0x01}
@@ -55,10 +45,11 @@ var (
 )
 
 func handleVideoRequests(ctx context.Context) handlerFunc {
-	if !isRaspberry && !isMac {
-		logWarning("Video not supported")
-		return handleUnsupportedVideoWebsocket
-	}
+	// if !isRaspberry && !isMac {
+	// 	logInfo(runtime.GOOS, runtime.GOARCH)
+	// 	logWarning("Video not supported")
+	// 	return handleUnsupportedVideoWebsocket
+	// }
 
 	framesChan, initialFrames := startCamera(ctx)
 	clients := NewClientMap(initialFrames)
@@ -149,10 +140,10 @@ func startCamera(ctx context.Context) (chan []byte, [][]byte) {
 	frameChan := make(chan []byte)
 	initialFrames := [][]byte{}
 
-	args := raspividArgs
+	args := ffmpegArgs
 
-	if isMac {
-		args = ffmpegArgs
+	if isRaspberry {
+		args = raspividArgs
 	}
 
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
