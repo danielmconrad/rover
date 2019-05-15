@@ -14,9 +14,9 @@ wifi_pass=""
 
 main() {
 	ask_for_inputs
-	set_configurations
 	install_docker
 	install_rover
+	set_configurations
 	success "Successfully configured your Pi as a rover!"
 }
 
@@ -46,14 +46,14 @@ set_configurations() {
 	info "Enabling camera"
 	out=$(sudo raspi-config nonint do_camera 1)
 	
-	info "Setting hostname"
-	out=$(sudo raspi-config nonint do_hostname $rover_hostname)
-	
 	info "Setting WiFi country"
 	out=$(sudo raspi-config nonint do_wifi_country $wifi_country)
 	
 	info "Setting WiFi credentials"
 	set_wifi_credentials
+	
+	info "Setting hostname"
+	out=$(sudo raspi-config nonint do_hostname $rover_hostname)
 }
 
 install_docker() {
