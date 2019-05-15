@@ -87,7 +87,6 @@ func setVelocities(motorState *MotorState) {
 }
 
 func setVelocity(speedPin, backwardPin, forwardPin rpio.Pin, speed int32) {
-
 	if !sendMotorSignals {
 		return
 	}
