@@ -7,7 +7,7 @@ CYAN='\033[0;36m'
 MAGENTA='\033[0;35m'
 NC='\033[0m'
 
-hostname="rover"
+rover_hostname="rover"
 wifi_country="US"
 wifi_ssid=""
 wifi_pass=""
@@ -21,9 +21,9 @@ main() {
 }
 
 ask_for_inputs() {
-  ask "Hostname? ($hostname)"
+  ask "Hostname? ($rover_hostname)"
   read hostname_in
-  if [[ $hostname_in != "" ]]; then hostname=$hostname_in; fi
+  if [[ $hostname_in != "" ]]; then rover_hostname=$hostname_in; fi
 
   ask "WiFi Country? ($wifi_country)"
   read wifi_country_in
@@ -47,7 +47,7 @@ set_configurations() {
   out=$(sudo raspi-config nonint do_camera 1)
   
   info "Setting hostname"
-  out=$(sudo raspi-config nonint do_hostname $hostname)
+  out=$(sudo raspi-config nonint do_hostname $rover_hostname)
   
   info "Setting WiFi country"
   out=$(sudo raspi-config nonint do_wifi_country $wifi_country)
