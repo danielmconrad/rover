@@ -23,11 +23,11 @@ main() {
 ask_for_inputs() {
   ask "Hostname? ($rover_hostname)"
   read hostname_in
-  if [[ $hostname_in != "" ]]; then rover_hostname=$hostname_in; fi
+  if [ "$hostname_in" != "" ]; then rover_hostname=$hostname_in; fi
 
   ask "WiFi Country? ($wifi_country)"
   read wifi_country_in
-  if [[ $wifi_country_in != "" ]]; then wifi_country=$wifi_country_in; fi
+  if [ "$wifi_country_in" != "" ]; then wifi_country=$wifi_country_in; fi
 
   ask "WiFi SSID?"
   read wifi_ssid
