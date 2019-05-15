@@ -16,15 +16,16 @@ import (
 )
 
 var (
-	width  = 1280
-	height = 720
+	width  = 640
+	height = 480
+	fps    = 48
 
 	ffmpegArgsLinux = []string{}
 
 	raspividArgs = []string{
 		"raspivid",
-		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height),
-		"-fps", "48", "-t", "0", "-pf", "baseline", "-o", "-",
+		"-w", strconv.Itoa(width), "-h", strconv.Itoa(height), "-fps", strconv.Itoa(fps),
+		"-t", "0", "-pf", "baseline", "-o", "-",
 	}
 
 	ffmpegArgsMac = []string{
