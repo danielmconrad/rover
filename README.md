@@ -1,6 +1,6 @@
 
 Install
-curl -sSL https://raw.githubusercontent.com/danielmconrad/rover/master/scripts/install.sh | sh
+sh -c "$(curl -sSL https://raw.githubusercontent.com/danielmconrad/rover/master/scripts/install.sh)"
 
 
 Updating 

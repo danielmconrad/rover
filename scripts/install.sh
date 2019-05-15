@@ -14,10 +14,10 @@ wifi_pass=""
 
 main() {
 	ask_for_inputs
-	# set_configurations
-	# install_docker
-	# install_rover
-	# success "Successfully configured your Pi as a rover!"
+	set_configurations
+	install_docker
+	install_rover
+	success "Successfully configured your Pi as a rover!"
 }
 
 ask_for_inputs() {
