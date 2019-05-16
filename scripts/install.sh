@@ -11,7 +11,7 @@ main() {
 	set_configurations
 	install_docker
 	install_rover
-	success "Successfully configured your Pi as a rover!"
+	success "Successfully configured your Pi as a rover! Please restart the pi."
 }
 
 set_configurations() {

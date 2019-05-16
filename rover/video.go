@@ -17,7 +17,7 @@ import (
 
 var (
 	width  = 640
-	height = 480
+	height = 400
 	fps    = 48
 
 	ffmpegArgsLinux = []string{}
