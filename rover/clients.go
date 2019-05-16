@@ -10,11 +10,11 @@ import (
 type ClientMap struct {
 	clients               map[*websocket.Conn]bool
 	mutex                 sync.RWMutex
-	initialBinaryMessages [][]byte
+	initialBinaryMessages []Frame
 }
 
 // NewClientMap NEEDSCOMMENT
-func NewClientMap(initialBinaryMessages [][]byte) *ClientMap {
+func NewClientMap(initialBinaryMessages []Frame) *ClientMap {
 	return &ClientMap{
 		clients:               map[*websocket.Conn]bool{},
 		initialBinaryMessages: initialBinaryMessages,
