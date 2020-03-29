@@ -44,7 +44,6 @@ func StartCamera(ctx context.Context, width, height, framerate uint64) (chan Fra
 	}
 
 	logInfo("Starting video: ", args)
-
 	cmd := exec.CommandContext(ctx, args[0], args[1:]...)
 
 	stdout, err := cmd.StdoutPipe()
@@ -62,6 +61,7 @@ func StartCamera(ctx context.Context, width, height, framerate uint64) (chan Fra
 	scanner.Split(splitAtNALSeparator)
 
 	go func() {
+		logInfo("Scanning video")
 		for scanner.Scan() {
 			select {
 			case frameChan <- scanner.Bytes():
@@ -75,11 +75,17 @@ func StartCamera(ctx context.Context, width, height, framerate uint64) (chan Fra
 	initialFramesWait.Add(1)
 	go func() {
 		defer initialFramesWait.Done()
+
+		logInfo("Collecting initial frames")
+
 		for frame := range frameChan {
 			if len(initialFrames) >= initialFrameCount {
+				logInfo("All initial frames collected")
 				return
 			}
+
 			initialFrames = append(initialFrames, frame)
+			logInfo("Frame collected")
 		}
 	}()
 
