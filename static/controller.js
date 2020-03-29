@@ -1,5 +1,5 @@
 const controllerSocket = new WebSocket(`ws://${location.host}/controller`);
-const controllerContainer = document.getElementById("controller-container");
+const infoContainer = document.getElementById("info-container");
 const controllerMap = new Map();
 
 const SOCKET = {
@@ -26,7 +26,7 @@ window.addEventListener("gamepadconnected", function(e) {
   console.log("Gamepad connected:", e.gamepad);
   controllerMap.set(e.gamepad, e.gamepad);
 
-  e.gamepad.vibrationActuator.playEffect('dual-rumble', {
+  e.gamepad.vibrationActuator.playEffect("dual-rumble", {
     startDelay: 0,
     duration: 200,
     weakMagnitude: 1.0,
@@ -42,8 +42,15 @@ window.addEventListener("gamepaddisconnected", function(e) {
 function sendControllerState() {
   if (controllerSocket.readyState !== SOCKET.OPEN) return;
 
-  for (let gamepad of controllerMap.values()) {
-    controllerContainer.innerHTML = `${gamepad.axes[1]} ${gamepad.axes[3]}`;
+  for (let controller of controllerMap.values()) {
+    const gamepad = navigator.getGamepads()[controller.index];
+
+    infoContainer.innerHTML = `
+      <span>
+        ${gamepad.axes[1].toFixed(2)}
+        ${gamepad.axes[3].toFixed(2)}
+      </span>
+    `;
 
     controllerSocket.send(
       JSON.stringify({
@@ -51,7 +58,7 @@ function sendControllerState() {
         right: gamepad.axes[3]
       })
     );
-  };
+  }
 
   requestAnimationFrame(sendControllerState);
 }

@@ -16,3 +16,4 @@ docker pull danielmconrad/rover:latest
 - Parameterize options via config or env vars
 - Test pi camera with ffmpeg
 - Do I still need `balenalib/rpi-raspbian` if using ffmpeg?
+- Frontend w/ React
