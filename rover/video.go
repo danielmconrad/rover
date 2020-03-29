@@ -4,11 +4,11 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"fmt"
+	// "fmt"
 	"io/ioutil"
 	"os/exec"
 	"runtime"
-	"strings"
+	// "strings"
 	"sync"
 )
 
@@ -17,6 +17,14 @@ type Frame []byte
 
 var (
 	raspividArgs = "raspivid -t 0 -w %d -h %d -fps %d -pf baseline -o -"
+
+	ffmpegArgsPi = []string{
+		"ffmpeg",
+		"-i", "/dev/video0",
+		"-vcodec", "libx264", "-profile:v", "baseline", "-pix_fmt", "yuv420p", "-level:v", "4.2",
+		"-preset", "ultrafast", "-tune", "zerolatency", "-bufsize", "0", "-crf", "22",
+		"-f", "rawvideo", "-",
+	}
 
 	ffmpegArgsMac = []string{
 		"ffmpeg",
@@ -37,7 +45,8 @@ func StartCamera(ctx context.Context, width, height, framerate uint64) (chan Fra
 	frameChan := make(chan Frame)
 	initialFrames := []Frame{}
 
-	args := strings.Split(fmt.Sprintf(raspividArgs, width, height, framerate), " ")
+	// args := strings.Split(fmt.Sprintf(raspividArgs, width, height, framerate), " ")
+	args := ffmpegArgsPi
 
 	if isMac {
 		args = ffmpegArgsMac
